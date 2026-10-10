@@ -1,0 +1,6 @@
+@LindaSpa.Reservas_HostAddress = http://localhost:5139
+
+GET {{LindaSpa.Reservas_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
