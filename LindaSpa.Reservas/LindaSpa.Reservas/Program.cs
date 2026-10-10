@@ -10,6 +10,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddSingleton<IClienteService, ClienteService>();
 builder.Services.AddSingleton<IServicioService, ServicioService>();
 builder.Services.AddSingleton<IEspecialistaService, EspecialistaService>();
+builder.Services.AddSingleton<IReservaService, ReservaService>();
 
 var app = builder.Build();
 
