@@ -1,6 +1,31 @@
-@LindaSpa.Reservas_HostAddress = http://localhost:5139
+@host = https://localhost:7241
 
-GET {{LindaSpa.Reservas_HostAddress}}/weatherforecast/
-Accept: application/json
+POST {{host}}/api/clientes
+Content-Type: application/json
+
+{
+  "nombre": "Ana",
+  "apellido": "Pérez",
+  "telefono": "8095551234",
+  "email": "ana@correo.com"
+}
 
 ###
+
+GET {{host}}/api/clientes
+
+###
+
+PUT {{host}}/api/clientes/1
+Content-Type: application/json
+
+{
+  "nombre": "Ana María",
+  "apellido": "Pérez",
+  "telefono": "8095551234",
+  "email": "ana@correo.com"
+}
+
+###
+
+DELETE {{host}}/api/clientes/1
