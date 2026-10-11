@@ -26,6 +26,31 @@ Content-Type: application/json
   "email": "ana@correo.com"
 }
 
-###
+### Crear servicio
+POST {{host}}/api/servicios
+Content-Type: application/json
 
-DELETE {{host}}/api/clientes/1
+{
+  "nombre": "Masaje relajante",
+  "duracionMinutos": 60,
+  "precio": 2500
+}
+
+### Listar servicios
+GET {{host}}/api/servicios
+
+### Obtener servicio por id
+GET {{host}}/api/servicios/1
+
+### Actualizar servicio
+PUT {{host}}/api/servicios/1
+Content-Type: application/json
+
+{
+  "nombre": "Masaje relajante premium",
+  "duracionMinutos": 90,
+  "precio": 3500
+}
+
+### Eliminar servicio
+DELETE {{host}}/api/servicios/1
