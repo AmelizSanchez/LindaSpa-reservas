@@ -1,5 +1,5 @@
 ﻿using LindaSpa.Reservas.DTOs;
-using LindaSpa.Reservas.Entities;
+using LindaSpa.Reservas.Models.Entities;
 
 namespace LindaSpa.Reservas.Services;
 

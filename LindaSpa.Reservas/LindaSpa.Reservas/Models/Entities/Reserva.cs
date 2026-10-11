@@ -1,4 +1,4 @@
-﻿namespace LindaSpa.Reservas.Entities;
+﻿namespace LindaSpa.Reservas.Models.Entities;
 
 public class Reserva
 {
