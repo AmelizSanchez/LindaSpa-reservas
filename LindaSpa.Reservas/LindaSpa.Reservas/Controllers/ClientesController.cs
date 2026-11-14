@@ -1,6 +1,6 @@
-﻿using LindaSpa.Reservas.Data;
-using LindaSpa.Reservas.Models.Dtos;
-using LindaSpa.Reservas.Models.Entities;
+using LindaSpa.Domain.Entities;
+using LindaSpa.Infrastructure.Core;
+using LindaSpa.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LindaSpa.Reservas.Controllers;
@@ -9,99 +9,51 @@ namespace LindaSpa.Reservas.Controllers;
 [Route("api/clientes")]
 public class ClientesController : ControllerBase
 {
-	private readonly ApplicationDbContext _context;
+	private readonly ClienteRepository _clienteRepository;
 
-	public ClientesController(ApplicationDbContext context)
+	public ClientesController(ClienteRepository clienteRepository)
 	{
-		_context = context;
+		_clienteRepository = clienteRepository;
 	}
 
 	[HttpGet]
-	public ActionResult<List<ClienteDTO>> GetAll()
+	public ActionResult<List<Cliente>> GetAll()
 	{
-		var clientes = _context.Clientes.ToList();
-
-		var clienteDTOs = clientes.Select(c => new ClienteDTO
-		{
-			Id = c.Id,
-			Nombre = c.Nombre,
-			Apellido = c.Apellido,
-			Telefono = c.Telefono,
-			Email = c.Email
-		}).ToList();
-
-		return Ok(clienteDTOs);
+		return Ok(_clienteRepository.GetAll());
 	}
 
 	[HttpGet("{id}")]
-	public ActionResult<ClienteDTO> GetById(int id)
+	public ActionResult<Cliente> GetById(int id)
 	{
-		var cliente = _context.Clientes.Find(id);
+		var cliente = _clienteRepository.GetById(id);
 		if (cliente == null)
 		{
 			return NotFound();
 		}
 
-		var clienteDTO = new ClienteDTO
-		{
-			Id = cliente.Id,
-			Nombre = cliente.Nombre,
-			Apellido = cliente.Apellido,
-			Telefono = cliente.Telefono,
-			Email = cliente.Email
-		};
-
-		return Ok(clienteDTO);
+		return Ok(cliente);
 	}
 
 	[HttpPost]
-	public ActionResult<ClienteDTO> Create([FromBody] CreateClienteDTO request)
+	public ActionResult<Cliente> Create([FromBody] Cliente request)
 	{
-		if (string.IsNullOrWhiteSpace(request.Nombre))
+		request.Id = 0;
+
+		var error = Validar(request);
+		if (error != null)
 		{
-			return BadRequest("El nombre del cliente es obligatorio.");
+			return BadRequest(error);
 		}
-		if (string.IsNullOrWhiteSpace(request.Apellido))
-		{
-			return BadRequest("El apellido del cliente es obligatorio.");
-		}
 
-		var nuevoCliente = new Cliente
-		{
-			Nombre = request.Nombre,
-			Apellido = request.Apellido,
-			Telefono = request.Telefono,
-			Email = request.Email
-		};
+		_clienteRepository.Add(request);
 
-		_context.Clientes.Add(nuevoCliente);
-		_context.SaveChanges();
-
-		var clienteDTO = new ClienteDTO
-		{
-			Id = nuevoCliente.Id,
-			Nombre = nuevoCliente.Nombre,
-			Apellido = nuevoCliente.Apellido,
-			Telefono = nuevoCliente.Telefono,
-			Email = nuevoCliente.Email
-		};
-
-		return CreatedAtAction(nameof(GetById), new { id = nuevoCliente.Id }, clienteDTO);
+		return CreatedAtAction(nameof(GetById), new { id = request.Id }, request);
 	}
 
 	[HttpPut("{id}")]
-	public IActionResult Update(int id, [FromBody] CreateClienteDTO request)
+	public IActionResult Update(int id, [FromBody] Cliente request)
 	{
-		if (string.IsNullOrWhiteSpace(request.Nombre))
-		{
-			return BadRequest("El nombre del cliente es obligatorio.");
-		}
-		if (string.IsNullOrWhiteSpace(request.Apellido))
-		{
-			return BadRequest("El apellido del cliente es obligatorio.");
-		}
-
-		var cliente = _context.Clientes.Find(id);
+		var cliente = _clienteRepository.GetById(id);
 		if (cliente == null)
 		{
 			return NotFound();
@@ -112,7 +64,13 @@ public class ClientesController : ControllerBase
 		cliente.Telefono = request.Telefono;
 		cliente.Email = request.Email;
 
-		_context.SaveChanges();
+		var error = Validar(cliente);
+		if (error != null)
+		{
+			return BadRequest(error);
+		}
+
+		_clienteRepository.Update(cliente);
 
 		return NoContent();
 	}
@@ -120,15 +78,40 @@ public class ClientesController : ControllerBase
 	[HttpDelete("{id}")]
 	public IActionResult Delete(int id)
 	{
-		var cliente = _context.Clientes.Find(id);
+		var cliente = _clienteRepository.GetById(id);
 		if (cliente == null)
 		{
 			return NotFound();
 		}
 
-		_context.Clientes.Remove(cliente);
-		_context.SaveChanges();
+		_clienteRepository.Remove(cliente);
 
 		return NoContent();
+	}
+
+	private string? Validar(Cliente cliente)
+	{
+		if (string.IsNullOrWhiteSpace(cliente.Nombre))
+		{
+			return "El nombre es obligatorio.";
+		}
+		if (string.IsNullOrWhiteSpace(cliente.Apellido))
+		{
+			return "El apellido es obligatorio.";
+		}
+		if (string.IsNullOrWhiteSpace(cliente.Telefono))
+		{
+			return "El teléfono es obligatorio.";
+		}
+		if (string.IsNullOrWhiteSpace(cliente.Email))
+		{
+			return "El email es obligatorio.";
+		}
+		if (_clienteRepository.EmailExists(cliente.Email, cliente.Id))
+		{
+			return "Ya existe un cliente con ese email.";
+		}
+
+		return null;
 	}
 }

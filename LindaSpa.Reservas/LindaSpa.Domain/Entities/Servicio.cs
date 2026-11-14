@@ -1,8 +1,9 @@
-﻿namespace LindaSpa.Reservas.Models.Entities;
+using LindaSpa.Domain.Core;
 
-public class Servicio
+namespace LindaSpa.Domain.Entities;
+
+public class Servicio : BaseEntity
 {
-	public int Id { get; set; }
 	public string Nombre { get; set; } = string.Empty;
 	public int DuracionMinutos { get; set; }
 	public decimal Precio { get; set; }

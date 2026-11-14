@@ -26,6 +26,57 @@ Content-Type: application/json
   "email": "ana@correo.com"
 }
 
-###
+### Crear servicio
+POST {{host}}/api/servicios
+Content-Type: application/json
 
-DELETE {{host}}/api/clientes/1
+{
+  "nombre": "Masaje relajante",
+  "duracionMinutos": 60,
+  "precio": 2500
+}
+
+### Listar servicios
+GET {{host}}/api/servicios
+
+### Obtener servicio por id
+GET {{host}}/api/servicios/1
+
+### Actualizar servicio
+PUT {{host}}/api/servicios/1
+Content-Type: application/json
+
+{
+  "nombre": "Masaje relajante premium",
+  "duracionMinutos": 90,
+  "precio": 3500
+}
+
+### Eliminar servicio
+DELETE {{host}}/api/servicios/1
+
+### Crear especialista
+POST {{host}}/api/especialistas
+Content-Type: application/json
+
+{
+  "nombre": "Laura Gómez",
+  "especialidad": "Masajes"
+}
+
+### Listar especialistas
+GET {{host}}/api/especialistas
+
+### Crear reserva
+POST {{host}}/api/reservas
+Content-Type: application/json
+
+{
+  "clienteId": 1,
+  "servicioId": 1,
+  "especialistaId": 1,
+  "fechaHora": "2026-11-20T10:00:00"
+}
+
+### Listar reservas
+GET {{host}}/api/reservas

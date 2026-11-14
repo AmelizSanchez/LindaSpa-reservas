@@ -1,8 +1,9 @@
-﻿namespace LindaSpa.Reservas.Models.Entities;
+using LindaSpa.Domain.Core;
 
-public class Especialista
+namespace LindaSpa.Domain.Entities;
+
+public class Especialista : BaseEntity
 {
-	public int Id { get; set; }
 	public string Nombre { get; set; } = string.Empty;
 	public string Especialidad { get; set; } = string.Empty;
 }

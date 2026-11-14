@@ -1,5 +1,6 @@
-using LindaSpa.Reservas.Data;
-using LindaSpa.Reservas.Services;
+using LindaSpa.Infrastructure.Context;
+using LindaSpa.Infrastructure.Core;
+using LindaSpa.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,15 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<LindaSpaContext>(options =>
 {
 	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-builder.Services.AddSingleton<IClienteService, ClienteService>();
-builder.Services.AddSingleton<IServicioService, ServicioService>();
-builder.Services.AddSingleton<IEspecialistaService, EspecialistaService>();
-builder.Services.AddSingleton<IReservaService, ReservaService>();
+builder.Services.AddScoped(typeof(BaseRepository<>));
+builder.Services.AddScoped<ClienteRepository>();
+builder.Services.AddScoped<ReservaRepository>();
 
 var app = builder.Build();
 
