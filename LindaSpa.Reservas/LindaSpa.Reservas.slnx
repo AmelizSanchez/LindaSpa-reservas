@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="LindaSpa.Application/LindaSpa.Application.csproj" />
   <Project Path="LindaSpa.Domain/LindaSpa.Domain.csproj" />
   <Project Path="LindaSpa.Infrastructure/LindaSpa.Infrastructure.csproj" />
   <Project Path="LindaSpa.Reservas/LindaSpa.Reservas.csproj" />

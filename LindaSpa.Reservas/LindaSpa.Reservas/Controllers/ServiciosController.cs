@@ -1,6 +1,6 @@
-using LindaSpa.Domain.Entities;
-using LindaSpa.Infrastructure.Core;
-using LindaSpa.Infrastructure.Repositories;
+using LindaSpa.Application.Dtos;
+using LindaSpa.Application.Services;
+using LindaSpa.Reservas.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LindaSpa.Reservas.Controllers;
@@ -9,100 +9,65 @@ namespace LindaSpa.Reservas.Controllers;
 [Route("api/servicios")]
 public class ServiciosController : ControllerBase
 {
-	private readonly BaseRepository<Servicio> _servicioRepository;
+	private readonly ServicioService _servicioService;
 
-	public ServiciosController(BaseRepository<Servicio> servicioRepository)
+	public ServiciosController(ServicioService servicioService)
 	{
-		_servicioRepository = servicioRepository;
+		_servicioService = servicioService;
 	}
 
 	[HttpGet]
-	public ActionResult<List<Servicio>> GetAll()
+	public ActionResult<List<ServicioDto>> GetAll()
 	{
-		return Ok(_servicioRepository.GetAll());
+		var result = _servicioService.GetAll();
+		return Ok(result.Data);
 	}
 
 	[HttpGet("{id}")]
-	public ActionResult<Servicio> GetById(int id)
+	public ActionResult<ServicioDto> GetById(int id)
 	{
-		var servicio = _servicioRepository.GetById(id);
-		if (servicio == null)
+		var result = _servicioService.GetById(id);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
 
-		return Ok(servicio);
+		return Ok(result.Data);
 	}
 
 	[HttpPost]
-	public ActionResult<Servicio> Create([FromBody] Servicio request)
+	public ActionResult<ServicioDto> Create([FromBody] ServicioDto request)
 	{
-		request.Id = 0;
-
-		var error = Validar(request);
-		if (error != null)
+		var result = _servicioService.Add(request);
+		if (!result.Success)
 		{
-			return BadRequest(error);
+			return this.ToError(result);
 		}
 
-		_servicioRepository.Add(request);
-
-		return CreatedAtAction(nameof(GetById), new { id = request.Id }, request);
+		return CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data);
 	}
 
 	[HttpPut("{id}")]
-	public IActionResult Update(int id, [FromBody] Servicio request)
+	public ActionResult<ServicioDto> Update(int id, [FromBody] ServicioDto request)
 	{
-		var servicio = _servicioRepository.GetById(id);
-		if (servicio == null)
+		var result = _servicioService.Update(id, request);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
 
-		servicio.Nombre = request.Nombre;
-		servicio.DuracionMinutos = request.DuracionMinutos;
-		servicio.Precio = request.Precio;
-
-		var error = Validar(servicio);
-		if (error != null)
-		{
-			return BadRequest(error);
-		}
-
-		_servicioRepository.Update(servicio);
-
-		return NoContent();
+		return Ok(result.Data);
 	}
 
 	[HttpDelete("{id}")]
 	public IActionResult Delete(int id)
 	{
-		var servicio = _servicioRepository.GetById(id);
-		if (servicio == null)
+		var result = _servicioService.Remove(id);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
-
-		_servicioRepository.Remove(servicio);
 
 		return NoContent();
-	}
-
-	private string? Validar(Servicio servicio)
-	{
-		if (string.IsNullOrWhiteSpace(servicio.Nombre))
-		{
-			return "El nombre es obligatorio.";
-		}
-		if (servicio.DuracionMinutos <= 0)
-		{
-			return "La duración debe ser mayor que cero.";
-		}
-		if (servicio.Precio <= 0)
-		{
-			return "El precio debe ser mayor que cero.";
-		}
-
-		return null;
 	}
 }

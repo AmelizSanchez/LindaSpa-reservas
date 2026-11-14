@@ -1,6 +1,6 @@
-using LindaSpa.Domain.Entities;
-using LindaSpa.Infrastructure.Core;
-using LindaSpa.Infrastructure.Repositories;
+using LindaSpa.Application.Dtos;
+using LindaSpa.Application.Services;
+using LindaSpa.Reservas.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LindaSpa.Reservas.Controllers;
@@ -9,121 +9,65 @@ namespace LindaSpa.Reservas.Controllers;
 [Route("api/reservas")]
 public class ReservasController : ControllerBase
 {
-	private readonly ReservaRepository _reservaRepository;
-	private readonly ClienteRepository _clienteRepository;
-	private readonly BaseRepository<Servicio> _servicioRepository;
-	private readonly BaseRepository<Especialista> _especialistaRepository;
+	private readonly ReservaService _reservaService;
 
-	public ReservasController(ReservaRepository reservaRepository,
-		ClienteRepository clienteRepository,
-		BaseRepository<Servicio> servicioRepository,
-		BaseRepository<Especialista> especialistaRepository)
+	public ReservasController(ReservaService reservaService)
 	{
-		_reservaRepository = reservaRepository;
-		_clienteRepository = clienteRepository;
-		_servicioRepository = servicioRepository;
-		_especialistaRepository = especialistaRepository;
+		_reservaService = reservaService;
 	}
 
 	[HttpGet]
-	public ActionResult<List<Reserva>> GetAll()
+	public ActionResult<List<ReservaDto>> GetAll()
 	{
-		return Ok(_reservaRepository.GetAll());
+		var result = _reservaService.GetAll();
+		return Ok(result.Data);
 	}
 
 	[HttpGet("{id}")]
-	public ActionResult<Reserva> GetById(int id)
+	public ActionResult<ReservaDto> GetById(int id)
 	{
-		var reserva = _reservaRepository.GetById(id);
-		if (reserva == null)
+		var result = _reservaService.GetById(id);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
 
-		return Ok(reserva);
+		return Ok(result.Data);
 	}
 
 	[HttpPost]
-	public ActionResult<Reserva> Create([FromBody] Reserva request)
+	public ActionResult<ReservaDto> Create([FromBody] ReservaDto request)
 	{
-		request.Id = 0;
-
-		var error = Validar(request);
-		if (error != null)
+		var result = _reservaService.Add(request);
+		if (!result.Success)
 		{
-			return BadRequest(error);
+			return this.ToError(result);
 		}
 
-		_reservaRepository.Add(request);
-
-		return CreatedAtAction(nameof(GetById), new { id = request.Id }, request);
+		return CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data);
 	}
 
 	[HttpPut("{id}")]
-	public IActionResult Update(int id, [FromBody] Reserva request)
+	public ActionResult<ReservaDto> Update(int id, [FromBody] ReservaDto request)
 	{
-		var reserva = _reservaRepository.GetById(id);
-		if (reserva == null)
+		var result = _reservaService.Update(id, request);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
 
-		reserva.ClienteId = request.ClienteId;
-		reserva.ServicioId = request.ServicioId;
-		reserva.EspecialistaId = request.EspecialistaId;
-		reserva.FechaHora = request.FechaHora;
-
-		var error = Validar(reserva);
-		if (error != null)
-		{
-			return BadRequest(error);
-		}
-
-		_reservaRepository.Update(reserva);
-
-		return NoContent();
+		return Ok(result.Data);
 	}
 
 	[HttpDelete("{id}")]
 	public IActionResult Delete(int id)
 	{
-		var reserva = _reservaRepository.GetById(id);
-		if (reserva == null)
+		var result = _reservaService.Remove(id);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
-
-		_reservaRepository.Remove(reserva);
 
 		return NoContent();
-	}
-
-	private string? Validar(Reserva reserva)
-	{
-		if (reserva.FechaHora == default)
-		{
-			return "La fecha y hora son obligatorias.";
-		}
-		if (!_clienteRepository.Exists(reserva.ClienteId))
-		{
-			return "El cliente no existe.";
-		}
-
-		var servicio = _servicioRepository.GetById(reserva.ServicioId);
-		if (servicio == null)
-		{
-			return "El servicio no existe.";
-		}
-		if (!_especialistaRepository.Exists(reserva.EspecialistaId))
-		{
-			return "El especialista no existe.";
-		}
-		if (!_reservaRepository.EstaDisponible(reserva.EspecialistaId, reserva.FechaHora,
-			servicio.DuracionMinutos, reserva.Id))
-		{
-			return "El horario no está disponible para este especialista.";
-		}
-
-		return null;
 	}
 }

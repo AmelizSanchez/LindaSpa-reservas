@@ -1,6 +1,6 @@
-using LindaSpa.Domain.Entities;
-using LindaSpa.Infrastructure.Core;
-using LindaSpa.Infrastructure.Repositories;
+using LindaSpa.Application.Dtos;
+using LindaSpa.Application.Services;
+using LindaSpa.Reservas.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LindaSpa.Reservas.Controllers;
@@ -9,95 +9,65 @@ namespace LindaSpa.Reservas.Controllers;
 [Route("api/especialistas")]
 public class EspecialistasController : ControllerBase
 {
-	private readonly BaseRepository<Especialista> _especialistaRepository;
+	private readonly EspecialistaService _especialistaService;
 
-	public EspecialistasController(BaseRepository<Especialista> especialistaRepository)
+	public EspecialistasController(EspecialistaService especialistaService)
 	{
-		_especialistaRepository = especialistaRepository;
+		_especialistaService = especialistaService;
 	}
 
 	[HttpGet]
-	public ActionResult<List<Especialista>> GetAll()
+	public ActionResult<List<EspecialistaDto>> GetAll()
 	{
-		return Ok(_especialistaRepository.GetAll());
+		var result = _especialistaService.GetAll();
+		return Ok(result.Data);
 	}
 
 	[HttpGet("{id}")]
-	public ActionResult<Especialista> GetById(int id)
+	public ActionResult<EspecialistaDto> GetById(int id)
 	{
-		var especialista = _especialistaRepository.GetById(id);
-		if (especialista == null)
+		var result = _especialistaService.GetById(id);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
 
-		return Ok(especialista);
+		return Ok(result.Data);
 	}
 
 	[HttpPost]
-	public ActionResult<Especialista> Create([FromBody] Especialista request)
+	public ActionResult<EspecialistaDto> Create([FromBody] EspecialistaDto request)
 	{
-		request.Id = 0;
-
-		var error = Validar(request);
-		if (error != null)
+		var result = _especialistaService.Add(request);
+		if (!result.Success)
 		{
-			return BadRequest(error);
+			return this.ToError(result);
 		}
 
-		_especialistaRepository.Add(request);
-
-		return CreatedAtAction(nameof(GetById), new { id = request.Id }, request);
+		return CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data);
 	}
 
 	[HttpPut("{id}")]
-	public IActionResult Update(int id, [FromBody] Especialista request)
+	public ActionResult<EspecialistaDto> Update(int id, [FromBody] EspecialistaDto request)
 	{
-		var especialista = _especialistaRepository.GetById(id);
-		if (especialista == null)
+		var result = _especialistaService.Update(id, request);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
 
-		especialista.Nombre = request.Nombre;
-		especialista.Especialidad = request.Especialidad;
-
-		var error = Validar(especialista);
-		if (error != null)
-		{
-			return BadRequest(error);
-		}
-
-		_especialistaRepository.Update(especialista);
-
-		return NoContent();
+		return Ok(result.Data);
 	}
 
 	[HttpDelete("{id}")]
 	public IActionResult Delete(int id)
 	{
-		var especialista = _especialistaRepository.GetById(id);
-		if (especialista == null)
+		var result = _especialistaService.Remove(id);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
-
-		_especialistaRepository.Remove(especialista);
 
 		return NoContent();
-	}
-
-	private string? Validar(Especialista especialista)
-	{
-		if (string.IsNullOrWhiteSpace(especialista.Nombre))
-		{
-			return "El nombre es obligatorio.";
-		}
-		if (string.IsNullOrWhiteSpace(especialista.Especialidad))
-		{
-			return "La especialidad es obligatoria.";
-		}
-
-		return null;
 	}
 }

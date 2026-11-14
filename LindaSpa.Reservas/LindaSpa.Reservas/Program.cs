@@ -1,3 +1,4 @@
+using LindaSpa.Application.Services;
 using LindaSpa.Infrastructure.Context;
 using LindaSpa.Infrastructure.Core;
 using LindaSpa.Infrastructure.Repositories;
@@ -16,6 +17,11 @@ builder.Services.AddDbContext<LindaSpaContext>(options =>
 builder.Services.AddScoped(typeof(BaseRepository<>));
 builder.Services.AddScoped<ClienteRepository>();
 builder.Services.AddScoped<ReservaRepository>();
+
+builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<ServicioService>();
+builder.Services.AddScoped<EspecialistaService>();
+builder.Services.AddScoped<ReservaService>();
 
 var app = builder.Build();
 

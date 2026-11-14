@@ -1,6 +1,6 @@
-using LindaSpa.Domain.Entities;
-using LindaSpa.Infrastructure.Core;
-using LindaSpa.Infrastructure.Repositories;
+using LindaSpa.Application.Dtos;
+using LindaSpa.Application.Services;
+using LindaSpa.Reservas.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LindaSpa.Reservas.Controllers;
@@ -9,109 +9,65 @@ namespace LindaSpa.Reservas.Controllers;
 [Route("api/clientes")]
 public class ClientesController : ControllerBase
 {
-	private readonly ClienteRepository _clienteRepository;
+	private readonly ClienteService _clienteService;
 
-	public ClientesController(ClienteRepository clienteRepository)
+	public ClientesController(ClienteService clienteService)
 	{
-		_clienteRepository = clienteRepository;
+		_clienteService = clienteService;
 	}
 
 	[HttpGet]
-	public ActionResult<List<Cliente>> GetAll()
+	public ActionResult<List<ClienteDto>> GetAll()
 	{
-		return Ok(_clienteRepository.GetAll());
+		var result = _clienteService.GetAll();
+		return Ok(result.Data);
 	}
 
 	[HttpGet("{id}")]
-	public ActionResult<Cliente> GetById(int id)
+	public ActionResult<ClienteDto> GetById(int id)
 	{
-		var cliente = _clienteRepository.GetById(id);
-		if (cliente == null)
+		var result = _clienteService.GetById(id);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
 
-		return Ok(cliente);
+		return Ok(result.Data);
 	}
 
 	[HttpPost]
-	public ActionResult<Cliente> Create([FromBody] Cliente request)
+	public ActionResult<ClienteDto> Create([FromBody] ClienteDto request)
 	{
-		request.Id = 0;
-
-		var error = Validar(request);
-		if (error != null)
+		var result = _clienteService.Add(request);
+		if (!result.Success)
 		{
-			return BadRequest(error);
+			return this.ToError(result);
 		}
 
-		_clienteRepository.Add(request);
-
-		return CreatedAtAction(nameof(GetById), new { id = request.Id }, request);
+		return CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data);
 	}
 
 	[HttpPut("{id}")]
-	public IActionResult Update(int id, [FromBody] Cliente request)
+	public ActionResult<ClienteDto> Update(int id, [FromBody] ClienteDto request)
 	{
-		var cliente = _clienteRepository.GetById(id);
-		if (cliente == null)
+		var result = _clienteService.Update(id, request);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
 
-		cliente.Nombre = request.Nombre;
-		cliente.Apellido = request.Apellido;
-		cliente.Telefono = request.Telefono;
-		cliente.Email = request.Email;
-
-		var error = Validar(cliente);
-		if (error != null)
-		{
-			return BadRequest(error);
-		}
-
-		_clienteRepository.Update(cliente);
-
-		return NoContent();
+		return Ok(result.Data);
 	}
 
 	[HttpDelete("{id}")]
 	public IActionResult Delete(int id)
 	{
-		var cliente = _clienteRepository.GetById(id);
-		if (cliente == null)
+		var result = _clienteService.Remove(id);
+		if (!result.Success)
 		{
-			return NotFound();
+			return this.ToError(result);
 		}
-
-		_clienteRepository.Remove(cliente);
 
 		return NoContent();
-	}
-
-	private string? Validar(Cliente cliente)
-	{
-		if (string.IsNullOrWhiteSpace(cliente.Nombre))
-		{
-			return "El nombre es obligatorio.";
-		}
-		if (string.IsNullOrWhiteSpace(cliente.Apellido))
-		{
-			return "El apellido es obligatorio.";
-		}
-		if (string.IsNullOrWhiteSpace(cliente.Telefono))
-		{
-			return "El teléfono es obligatorio.";
-		}
-		if (string.IsNullOrWhiteSpace(cliente.Email))
-		{
-			return "El email es obligatorio.";
-		}
-		if (_clienteRepository.EmailExists(cliente.Email, cliente.Id))
-		{
-			return "Ya existe un cliente con ese email.";
-		}
-
-		return null;
 	}
 }
